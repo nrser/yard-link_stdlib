@@ -1,0 +1,4 @@
+---
+qb/ruby/gem/new:
+  is-project: true
+  hub: true
