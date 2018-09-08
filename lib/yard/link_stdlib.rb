@@ -1,4 +1,5 @@
-require "yard/link_stdlib/version"
+require_relative "./link_stdlib/version"
+require_relative "./link_stdlib/html_helper"
 
 module YARD
   module LinkStdlib

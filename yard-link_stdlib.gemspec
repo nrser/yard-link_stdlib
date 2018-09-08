@@ -19,7 +19,7 @@ Gem::Specification.new do |spec|
     natural.
   END
   spec.homepage      = "https://github.com/nrser/yard-link_stdlib"
-  spec.license       = "MIT"
+  spec.license       = "BSD"
 
   # Specify which files should be added to the gem when it is released.
   # The `git ls-files -z` loads the files in the RubyGem that have been added into git.
@@ -34,4 +34,6 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rake", "~> 10.0"
   spec.add_development_dependency "rspec", "~> 3.0"
   spec.add_development_dependency "pry", "~> 0.11.3"
+
+  spec.add_dependency "yard"
 end

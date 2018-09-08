@@ -2,6 +2,7 @@
 
 require "bundler/setup"
 require "yard/link_stdlib"
+require "yard/link_stdlib/ruby_map"
 
 
 Pathname.
