@@ -35,9 +35,18 @@ module  LinkStdlib
 # A helper module to add to {YARD::Templates::Template.extra_includes} to 
 # handle linking stdlib references.
 # 
-# @see https://www.rubydoc.info/gems/yard/YARD/Templates/Template#extra_includes-class_method
+# @see https://www.rubydoc.info/gems/yard/YARD%2FTemplates%2FTemplate.extra_includes
 # 
 module HtmlHelper
+
+  # The {Proc} we pass to 
+  # 
+  # @return [Proc]
+  # 
+  INCLUDE_FILTER = proc do |options|
+    HtmlHelper if options.format == :html
+  end
+
 
   # The only real meat of this whole gem - hook into object linking.
   # 
@@ -96,9 +105,13 @@ module HtmlHelper
         key: key,
         stdlib_key: stdlib_key
       
-      ruby_version = LinkStdlib.ruby_version
+      version = LinkStdlib.ruby_minor_version
       
-      %{<a href="https://docs.ruby-lang.org/en/#{ ruby_version }/#{ path }">#{ key }</a>}
+      [
+        %{<a href="https://docs.ruby-lang.org/en/#{ version }/#{ path }">},
+        key,
+        %{</a>},
+      ].join ''
 
     else
       LinkStdlib.dump "Got nada.",
@@ -110,62 +123,7 @@ module HtmlHelper
 
   end # #link_object
 
-
-  # The bound {Method} reference to this guy is what gets added to 
-  # {YARD::Templates::Template.extra_includes}.
-  # 
-  # All it does it return `self` if the format is `:html`.
-  # 
-  # Normally, this would just be a lambda or such, but I made {#install!}
-  # idempotent, so it looks for this method exactly when deciding if it needs
-  # to be added.
-  # 
-  # @param [YARD::Templates::TemplateOptions] options
-  #   The options for the template in question. I'm guessing re what class it
-  #   is, but it seems like a reasonable guess. All we care is that is has a
-  #   `#format` that can be `:html`.
-  # 
-  # @return [nil]
-  #   If `options.format` *is not* `:html`.
-  # 
-  # @return [self]
-  #   If `options.format` *is* `:html`.
-  # 
-  def self._installation_target options
-    self if options.format == :html
-  end
-
-
-  # Module method to add the helper to
-  # {YARD::Templates::Template.extra_includes} (if it's not there already).
-  # 
-  # What actually gets added is a bound reference to {._installation_target},
-  # which simply returns `self` if the format is `:html` (we're not handling
-  # anything else at this time).
-  # 
-  # @see https://www.rubydoc.info/gems/yard/YARD/Templates/Template#extra_includes-class_method
-  # 
-  # @return [Boolean]
-  #   `true` if the helper was added, `false` if it was already there (noop).
-  # 
-  def self.install!
-    target = self.method :_installation_target
-
-    if ::YARD::Templates::Template.extra_includes.include? target
-      false
-    else
-      ::YARD::Templates::Template.extra_includes << target
-      true
-    end
-  end # .install!
-
 end # module HtmlHelper
-
-
-# Installation
-# ============================================================================
-
-HtmlHelper.install!
 
 
 # /Namespace
