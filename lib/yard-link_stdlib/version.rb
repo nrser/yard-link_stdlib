@@ -34,7 +34,7 @@ module  LinkStdlib
 # 
 # @return [Pathname]
 # 
-ROOT = Pathname.new( __dir__ ).join( '..', '..', '..' ).expand_path
+ROOT = Pathname.new( __dir__ ).join( '..', '..' ).expand_path
 
 
 # String version read from `//VERSION` and used in the gemspec.
