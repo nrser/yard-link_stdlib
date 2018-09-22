@@ -30,6 +30,22 @@ def self.ruby_version
 end
 
 
+# {.ruby_version} rounded-off to the minor version (patch set to `0`).
+# 
+# [docs.ruby-lang.org](https://docs.ruby-lang.org) only serves docs for major 
+# and minor releases, not patches (`2.3.0`, `2.4.0`, `2.5.0`, etc.).
+# 
+# @example
+#   YARD::LinkStdlib.ruby_version = '2.5.1'
+#   YARD::LinkStdlib.ruby_minor_version #=> '2.5.0'
+# 
+# @return [String]
+# 
+def self.ruby_minor_version
+  ruby_version.sub /\.\d+\z/, '.0'
+end
+
+
 # /Namespace
 # ========================================================================
 
