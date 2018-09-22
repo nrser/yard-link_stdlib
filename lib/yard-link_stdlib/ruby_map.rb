@@ -103,7 +103,10 @@ module Repo
     if dir.exist?
       false
     else
-      LinkStdlib.tmp_dir { system! 'git', 'clone', url, dir.basename.to_s }
+      LinkStdlib.tmp_dir do
+        LinkStdlib.system! 'git', 'clone', url, dir.basename.to_s
+      end
+
       true
     end
   end
@@ -119,7 +122,7 @@ module Repo
       'git',
       'checkout',
       "v#{ version.segments.join( '_' ) }",
-      chdir: dir
+      chdir: dir.to_s
   end
 
 end # module Repo
@@ -148,11 +151,12 @@ module Map
     return false if path.exist?
 
     Repo.checkout version
+
     LinkStdlib.system! \
-      LinkStdlib::ROOT.join( 'bin', 'make_map.rb' ),
-      path( version ),
-      '--op',
-      LinkStdlib.tmp_dir.join( 'whatever' )
+      LinkStdlib::ROOT.join( 'bin', 'make_map.rb' ).to_s,
+      path( version ).to_s,
+      # I *think* this option is not used for anything but is required 
+      '--op', LinkStdlib.tmp_dir.join( 'not_used' ).to_s
     
     true
   end
