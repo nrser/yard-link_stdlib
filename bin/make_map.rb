@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 
 require 'pathname'
+require 'fileutils'
 require 'rdoc/rdoc'
 
 # Get paths in order - we want to be in the Ruby repo checkout
@@ -81,6 +82,8 @@ def main args
       map[instance_method.full_name] = instance_method.path
     end
   end
+
+  FileUtils.mkdir_p dest.dirname unless dest.dirname.exist?
 
   dest.open 'w' do |f|
     f.write JSON.dump( map )
