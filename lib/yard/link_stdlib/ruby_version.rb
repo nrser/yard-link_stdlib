@@ -26,21 +26,21 @@ module RubyVersion
   # 
   # @return [Gem::Version]
   # 
-  MINIMUM_SUPPORTED = Gem::Version.new( '2.3.0' ).freeze
+  MINIMUM_SUPPORTED = Gem::Version.new '2.3.0'
 
 
   # As of 2018.09.23, the latest stable release
   # 
   # @return [Gem::Version]
   # 
-  LATEST_STABLE = Gem::Version.new( '2.5.1' ).freeze
+  LATEST_STABLE = Gem::Version.new '2.5.1'
 
 
   # Whatever version we're running here and now.
   # 
   # @return [Gem::Version]
   # 
-  CURRENT_RUNTIME = Gem::Version.new( RUBY_VERSION ).freeze
+  CURRENT_RUNTIME = Gem::Version.new RUBY_VERSION
 
 
   # If no-one tells us different then use the minimum supported Ruby version.
@@ -65,14 +65,14 @@ module RubyVersion
   #   The newly set value. Is frozen.
   # 
   def self.set version
-    @ruby_version = Gem::Version.new( version ).freeze
+    @ruby_version = Gem::Version.new version
   end
 
 
   # Get what version of Ruby is set to link to.
   # 
   # @return [Gem::Version]
-  #   Returns the actual instance var reference, but it's frozen, so it should
+  #   Returns the actual in`stance var reference, but it's frozen, so it should
   #   be reasonably OK.
   # 
   def self.get
@@ -92,9 +92,7 @@ module RubyVersion
   # @return [Gem::Version]
   # 
   def self.minor
-    Gem::Version.
-      new( LinkStdlib.ruby_version.segments[0..1].map( &:to_s ).join( '.' ) ).
-      freeze
+    Gem::Version.new( ( get.segments[0..1] + [0] ).map( &:to_s ).join( '.' ) )
   end
 
 
