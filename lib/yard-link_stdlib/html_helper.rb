@@ -105,7 +105,7 @@ module HtmlHelper
         key: key,
         stdlib_key: stdlib_key
       
-      version = LinkStdlib.ruby_minor_version
+      version = LinkStdlib::RubyVersion.minor
       
       [
         %{<a href="https://docs.ruby-lang.org/en/#{ version }/#{ path }">},

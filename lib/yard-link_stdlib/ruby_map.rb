@@ -154,9 +154,7 @@ module Map
 
     LinkStdlib.system! \
       LinkStdlib::ROOT.join( 'bin', 'make_map.rb' ).to_s,
-      path( version ).to_s,
-      # I *think* this option is not used for anything but is required 
-      '--op', LinkStdlib.tmp_dir.join( 'not_used' ).to_s
+      path( version ).to_s
     
     true
   end
@@ -167,7 +165,7 @@ module Map
   end
 
 
-  def self.get version = LinkStdlib.ruby_version, make: true
+  def self.get version = LinkStdlib::RubyVersion.get, make: true
     cache version do
       make( version ) if make
       load version
