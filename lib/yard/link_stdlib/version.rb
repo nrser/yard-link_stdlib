@@ -51,6 +51,10 @@ VERSION = (ROOT + 'VERSION').read.chomp
 NAME = (ROOT + 'NAME').read.chomp
 
 
+def self.repo?
+  ROOT.join( 'dev' ).directory?
+end
+
 # {Singleton} extension of {Gem::Version} that loads {Locd::VERSION} and
 # provides some convenient methods.
 # 

@@ -19,7 +19,7 @@ require 'yard'
 
 require_relative './dump'
 require_relative './ruby_version'
-require_relative './ruby_map'
+require_relative './object_map'
 
 
 # Namespace
@@ -99,7 +99,7 @@ module HtmlHelper
     # so we want to convert to that
     stdlib_key = key.sub /\.(\w+[\?\!]?)\z/, '::\1'
 
-    if ( path = Map.get[ stdlib_key ] )
+    if ( path = ObjectMap.current.data[ stdlib_key ] )
       LinkStdlib.dump "Matched stdlib link!",
         path: path,
         key: key,

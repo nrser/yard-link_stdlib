@@ -2,11 +2,14 @@
 
 require 'pathname'
 require 'fileutils'
+require 'zlib'
+
 require 'rdoc/rdoc'
 
 # Get paths in order - we want to be in the Ruby repo checkout
 GEM_ROOT = Pathname.new( __dir__ ).join( '..' ).expand_path
-REPO = GEM_ROOT.join 'tmp', 'ruby'
+# REPO = GEM_ROOT.join 'tmp', 'ruby'
+# REPO = GEM_ROOT.join 'tmp', 'ruby-2_5_1'
 
 class RDoc::RDoc
   # Pretty much a copy of `RDoc::RDoc#document`, just with the `#generate` step
@@ -59,8 +62,10 @@ class RDoc::RDoc
 end
 
 def main args
+  src = Pathname.new( args.shift ).expand_path
   dest = Pathname.new( args.shift ).expand_path
-
+  
+  puts "src: #{ src.inspect }"
   puts "dest: #{ dest.inspect }"
 
   # RDoc needs this output dir arg in `ARGV` or it will bail out with an error
@@ -71,7 +76,7 @@ def main args
     args << '/tmp/not_actually_used'
   end
 
-  Dir.chdir REPO
+  Dir.chdir src
 
   rd = RDoc::RDoc.new
 
@@ -93,8 +98,8 @@ def main args
 
   FileUtils.mkdir_p dest.dirname unless dest.dirname.exist?
 
-  dest.open 'w' do |f|
-    f.write JSON.dump( map )
+  Zlib::GzipWriter.open dest do |gz|
+    gz.write JSON.pretty_generate( map )
   end
 end
 
