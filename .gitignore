@@ -112,6 +112,3 @@ ansible-error.log
 # Project Patterns
 # ============================================================================
 
-# Ignore the generated maps for the moment - don't dump-up the repo with these
-# monstrosities until I figure out how I want them
-/maps/**/*
