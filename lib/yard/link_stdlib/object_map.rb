@@ -42,6 +42,15 @@ module  LinkStdlib
 
 class ObjectMap
 
+  # Mixins
+  # ==========================================================================
+
+  include Comparable
+
+  
+  # Class Variables
+  # ==========================================================================
+
   @@data_dir = LinkStdlib::ROOT.join( 'maps' ).tap { |path|
     FileUtils.mkdir_p( path ) unless path.exist?
   }
@@ -82,6 +91,25 @@ class ObjectMap
   end
 
 
+  
+  # @todo Document list method.
+  # 
+  # @param [type] arg_name
+  #   @todo Add name param description.
+  # 
+  # @return [return_type]
+  #   @todo Document return value.
+  # 
+  def self.list
+    data_dir.entries.
+      select  { |filename| filename.to_s =~ /\Aruby\-(\d+\.)+json\.gz\z/ }.
+      map     { |filename|
+        new File.basename( filename.to_s, '.json.gz' ).sub( /\Aruby\-/, '' )
+      }.
+      sort
+  end # .list
+
+
   # def self.cache key, &load
   #   @cache ||= {}
 
@@ -114,7 +142,7 @@ class ObjectMap
 
 
   def filename
-    @filename ||= "#{ version }.json.gz"
+    @filename ||= "ruby-#{ version }.json.gz"
   end
 
 
@@ -139,7 +167,14 @@ class ObjectMap
 
   def make force: false
     # Bail unless forced or the map is not present
-    return self unless force || !present?
+    if force
+      log.info "FORCE making object map for Ruby #{ version }..."
+    elsif !present?
+      log.info "Making object map for Ruby #{ version }..."
+    else
+      log.info "Object map for Ruby #{ version } is present."
+      return self
+    end
 
     # Make sure we have the source files in place
     source.ensure
@@ -150,6 +185,8 @@ class ObjectMap
       source.src_path.to_s,
       path.to_s
     
+    log.info "Made object map for Ruby #{ version }."
+
     self
   end
 
@@ -162,6 +199,11 @@ class ObjectMap
     end
 
     @data
+  end
+
+
+  def <=> other
+    version <=> other.version
   end
 
 

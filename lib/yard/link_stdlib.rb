@@ -7,8 +7,7 @@
 # Stdlib
 # -----------------------------------------------------------------------
 
-# Deps
-# -----------------------------------------------------------------------
+require 'shellwords'
 
 # Project / Package
 # -----------------------------------------------------------------------
@@ -74,7 +73,7 @@ def self.install!
     YARD::Templates::Template.extra_includes << HELPER_FOR_OPTIONS
   end
 
-  YARD::CLI::CommandParser.commands[:link_stdlib] ||= YARD::CLI::LinkStdlib
+  YARD::CLI::CommandParser.commands[:stdlib] ||= YARD::CLI::LinkStdlib
 
   nil
 end # .install!
@@ -148,6 +147,16 @@ end
 #   If the command fails.
 # 
 def self.system! *args
+  opts  = args[-1].is_a?( Hash )  ? args.pop : {}
+  env   = args[0].is_a?( Hash )   ? args.shift : {}
+
+  log.info [
+    "Making system call:",
+    "\t#{ Shellwords.join args }",
+    ( opts.empty? ? nil : "\toptions: #{ opts.inspect }" ),
+    ( env.empty? ? nil : "\tenv: #{ env.inspect }" ),
+  ].compact.join( "\n" )
+
   Kernel.system( *args ).tap { |success|
     unless success
       raise SystemCallError.new \

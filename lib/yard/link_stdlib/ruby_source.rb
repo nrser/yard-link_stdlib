@@ -27,6 +27,12 @@ module  LinkStdlib
 # 
 class RubySource
 
+  # Mixins
+  # ========================================================================
+
+  include Comparable
+
+
   # Class Methods
   # ============================================================================
 
@@ -44,6 +50,18 @@ class RubySource
   def self.ensure version
     new( version ).ensure
   end # .ensure
+
+
+  def self.list
+    LinkStdlib.tmp_dir.entries.
+      select { |filename|
+        filename.to_s =~ /\Aruby\-\d+\_\d+\_\d+\z/
+      }.
+      map { |filename|
+        new filename.to_s.sub( /\Aruby\-/, '' ).gsub( '_', '.' )
+      }.
+      sort
+  end
 
 
   # Ruby version.
@@ -95,7 +113,16 @@ class RubySource
   end
 
 
-  def download
+  def download force: false
+    if force
+      log.info "FORCING download of Ruby #{ version } tarball..."
+    elsif tar_path.exist?
+      log.info "Ruby #{ version } tarball present."
+      return self
+    else
+      log.info "Downloading Ruby #{ version } tarball..."
+    end
+
     response = LinkStdlib.http_get url
     tar_path.open( "wb" ) { |file| file.write response.body }
 
@@ -103,26 +130,53 @@ class RubySource
   end
 
 
-  def extract
+  def extract force: false
+    if force
+      log.info "FORCING extraction of Ruby #{ version } source tarball..."
+    elsif src_path.exist?
+      log.info "Ruby #{ version } source present."
+      return self
+    else
+      log.info "Extracting #{ tar_path } -> #{ src_path }..."
+    end
+
     LinkStdlib.system! \
       'tar',  '-x',                           # extract
               '-f', tar_path.to_s,            # file
               '-C', LinkStdlib.tmp_dir.to_s   # directory (chdir)
     
+    log.info "Source for Ruby #{ version } extracted to #{ src_path }."
+
     self # For chaining
   end
 
 
   def ensure
-    return if src_path.exist? # Nothing to do, source is already in place
+    if src_path.exist?
+      # Nothing to do, source is already in place
+      log.info "Source for Ruby #{ version } is present."
+      return
+    end
 
     # Download unless the tar's already there
-    download unless tar_path.exist?
+    download
 
     # And we must need to extract it since the src path wasn't there
     extract
 
     self # For chaining
+  end
+
+
+  def to_s
+    %{#<YARD::LinkStdlib::RubySource "#{ version }">}
+  end
+
+  def inspect; to_s; end
+
+
+  def <=> other
+    version <=> other.version
   end
 
 end # class RubySource

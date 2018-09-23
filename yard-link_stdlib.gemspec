@@ -30,10 +30,32 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
-  spec.add_development_dependency "bundler", "~> 1.16"
-  spec.add_development_dependency "rake", "~> 10.0"
-  spec.add_development_dependency "rspec", "~> 3.0"
-  spec.add_development_dependency "pry", "~> 0.11.3"
+  # Dependencies
+  # ============================================================================
+  
+  # Runtime Dependencies
+  # ----------------------------------------------------------------------------
 
   spec.add_dependency "yard"
+
+  # Development Dependencies
+  # ----------------------------------------------------------------------------
+
+  spec.add_development_dependency "bundler", "~> 1.16"
+  spec.add_development_dependency "rake", "~> 12.3"
+  spec.add_development_dependency "rspec", "~> 3.7"
+
+  # Nicer REPL experience
+  spec.add_development_dependency "pry", '~> 0.11.3'
+
+  # Supposed to drop into pry as a debugger on unhandled exceptions, but I 
+  # haven't gotten to test it yet
+  spec.add_development_dependency "pry-rescue", '~> 1.4.5'
+
+  # Move around the stack when you debug with `pry`, really sweet
+  spec.add_development_dependency "pry-stack_explorer", '~> 0.4.9'
+
+  # Provider for `commonmarker`, the new GFM lib
+  spec.add_development_dependency 'yard-commonmarker', '~> 0.5.0'
+
 end
