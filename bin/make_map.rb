@@ -63,6 +63,14 @@ def main args
 
   puts "dest: #{ dest.inspect }"
 
+  # RDoc needs this output dir arg in `ARGV` or it will bail out with an error
+  # due to `//doc` existing, even though we don't ever actually write to any of
+  # it.
+  unless args.include? '--op'
+    args << '--op'
+    args << '/tmp/not_actually_used'
+  end
+
   Dir.chdir REPO
 
   rd = RDoc::RDoc.new
