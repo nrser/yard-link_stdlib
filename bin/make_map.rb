@@ -58,8 +58,8 @@ class RDoc::RDoc
 
     # generate
     nil
-  end
-end
+  end # #almost_document
+end # class RDoc::RDoc
 
 def main args
   src = Pathname.new( args.shift ).expand_path
