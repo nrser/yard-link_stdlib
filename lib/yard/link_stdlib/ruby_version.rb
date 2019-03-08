@@ -91,8 +91,9 @@ module RubyVersion
   # 
   # @return [Gem::Version]
   # 
-  def self.minor
-    Gem::Version.new( ( get.segments[0..1] + [0] ).map( &:to_s ).join( '.' ) )
+  def self.minor version = self.get
+    Gem::Version.new \
+      ( version.segments[0..1] + [0] ).map( &:to_s ).join( '.' )
   end
 
 

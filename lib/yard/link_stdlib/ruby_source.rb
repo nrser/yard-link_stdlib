@@ -35,7 +35,22 @@ class RubySource
 
   # Class Methods
   # ============================================================================
-
+  
+  
+  def self.make_missing?
+    unless instance_variable_defined? :@make_missing
+      @make_missing = true
+    end
+    
+    @make_missing
+  end
+  
+  
+  def self.make_missing= value
+    @make_missing = !!value
+  end
+  
+  
   # Ensure the version's source is downloaded and extracted.
   # 
   # @example
@@ -156,6 +171,12 @@ class RubySource
       # Nothing to do, source is already in place
       log.info "Source for Ruby #{ version } is present."
       return
+    end
+    
+    unless self.class.make_missing?
+      raise RuntimeError,
+        "Object map for Ruby version #{ version } missing; " +
+        "not configured to auto-make"
     end
 
     # Download unless the tar's already there

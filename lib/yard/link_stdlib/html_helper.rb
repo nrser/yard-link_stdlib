@@ -17,7 +17,6 @@ require 'yard'
 # Project / Package
 # ------------------------------------------------------------------------
 
-require_relative './dump'
 require_relative './ruby_version'
 require_relative './object_map'
 
@@ -74,7 +73,7 @@ module HtmlHelper
   # 
   def link_object obj, title = nil, anchor = nil, relative = true
     # See what the super method can do...
-    super_link = super
+    super_link = super()
 
     # Bail out unless `super` returned a {String}, which I'm guessing would be
     # `nil`, but not sure.
@@ -89,29 +88,13 @@ module HtmlHelper
       obj: obj,
       super_link: super_link
 
-    # `key` is what we gonna look up in the stdlib...
-    key = super_link
-
-    # Strip off any leading `::`
-    key = key[2..-1] if key.start_with?( '::' )
-
-    # Stdlib rdoc uses `ClassOrModule::class_method` format for class methods,
-    # so we want to convert to that
-    stdlib_key = key.sub /\.(\w+[\?\!]?)\z/, '::\1'
-
-    if ( path = ObjectMap.current.data[ stdlib_key ] )
+    # if ( path = ObjectMap.current.data[ stdlib_key ] )
+    if (url = ObjectMap.current.url_for super_link)
       LinkStdlib.dump "Matched stdlib link!",
-        path: path,
-        key: key,
-        stdlib_key: stdlib_key
+        name: super_link,
+        url: url
       
-      version = LinkStdlib::RubyVersion.minor
-      
-      [
-        %{<a href="https://docs.ruby-lang.org/en/#{ version }/#{ path }">},
-        key,
-        %{</a>},
-      ].join ''
+      %(<a href="#{ url }">#{ CGI.escapeHTML super_link }</a>)
 
     else
       LinkStdlib.dump "Got nada.",

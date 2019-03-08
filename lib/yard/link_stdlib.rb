@@ -180,59 +180,6 @@ module  LinkStdlib
       rel_path
   end
   
-  
-  # Get the relative path for the URL of an online stdlib document given the
-  # code object's name.
-  #
-  # @example
-  #   YARD::LinkStdlib.rel_path_for 'String'
-  #   #=> 'String.html'
-  # 
-  # @param [String] name
-  # 
-  # @return [nil]
-  #   The (normalized) `name` was not found in the {ObjectMap}.
-  # 
-  # @return [String]
-  #   The relative path to the online doc.
-  # 
-  def self.rel_path_for name
-    ObjectMap.current.data[ normalize_name name ]
-  end # .path_for
-  
-  
-  # @todo Document url_for method.
-  # 
-  # @example Using defaults
-  #   YARD::LinkStdlib.url_for 'String'
-  #   #=> 'https://docs.ruby-lang.org/en/2.3.0/String.html'
-  # 
-  # @example Manually override components
-  #   YARD::LinkStdlib.url_for 'String',
-  #     https: false,
-  #     domain: 'example.com',
-  #     lang: 'ja',
-  #     version: '2.6.0'
-  #   #=> 'http://example.com/ja/2.6.0/String.html'
-  # 
-  # @param [String] name
-  #   Name of the code object.
-  # 
-  # @param [Hash<Symbol, Object>] url_options
-  #   Passed to {.build_url}.
-  # 
-  # @return [nil]
-  #   The (normalized) `name` was not found in the {ObjectMap}.
-  # 
-  # @return [String]
-  #   The fully-formed URL to the online doc.
-  # 
-  def self.url_for name, **url_options
-    if (rel_path = rel_path_for name)
-      build_url rel_path, **url_options
-    end
-  end # .url_for
-  
   # @!endgroup Resolving Names Singleton Methods # ***************************
   
   
@@ -268,7 +215,7 @@ module  LinkStdlib
             "Bad mode, expected `:any` or `:all`, found #{ mode.inspect }"
         end
       }.
-      sort
+      sort_by( &:downcase )
   end # .grep
   
   # @!endgroup Querying Singleton Methods # **********************************
@@ -330,14 +277,15 @@ module  LinkStdlib
       raise TypeError,
         "`name` must be a String, given #{ name.class }: #{ name.inspect }"
     end
-  
+    
+    # Strip off any leading `::`
     if name.start_with? '::'
-      name[ 2..-1 ]
-    else
-      name
+      name = name[ 2..-1 ]
     end
     
-    name.gsub '.', '::'
+    # Stdlib rdoc uses `ClassOrModule::class_method` format for class methods,
+    # so we want to convert to that
+    name.sub /\.(\w+[\?\!]?)\z/, '::\1'
   end # .normalize_name
   
   
@@ -404,7 +352,7 @@ module  LinkStdlib
 
   # Run a {Kernel.system}, raising if it fails.
   # 
-  # @param [Array] *args
+  # @param [Array] args
   #   See {Kernel.system}.
   # 
   # @return [true]
@@ -469,6 +417,63 @@ module  LinkStdlib
       response.error!
     end 
   end
+  
+  
+  # Dump a hash of values as a `debug`-level log message (`log` is a global
+  # function when you're hangin' in the YARD).
+  # 
+  # @example Dump values with a message
+  #   obj = [ 1, 2, 3 ]
+  #   
+  #   dump "There was a problem with the ", obj, "object!",
+  #     value_a: 'aye!',
+  #     value_b: 'bzzz'
+  # 
+  # @example Dump values without a message
+  #   dump value_a: 'aye!', value_b: 'bzzz'
+  # 
+  # @param [Array<String | Object>] message
+  #   Optional log message. Entries will be space-joined to form the message 
+  #   string: strings will be left as-is, and other objects will be
+  #   stringified by calling their `#inspect` method. See examples.
+  # 
+  # @param [Hash<Symbol, Object>] values
+  #   Map of names to values to dump.
+  # 
+  # @return
+  #   Whatever `log.debug` returns.
+  # 
+  def self.dump *message, **values
+
+    max_name_length = values.
+      keys.
+      map { |name| name.to_s.length }.
+      max
+
+    values_str = values.
+      map { |name, value|
+        name_str = "%-#{ max_name_length + 2 }s" % "#{ name }:"
+
+        "  #{ name_str } #{ value.inspect } (#{ value.class })"
+      }.
+      join( "\n" )
+    
+    message_str = message.
+      map { |part|
+        case part
+        when String
+          part
+        else
+          part.inspect
+        end
+      }.
+      join( " " )
+    
+    log_str = "Values:\n\n#{ values_str }\n"
+    log_str = "#{ message_str }\n\n#{ log_str }" unless message_str.empty?
+
+    log.debug "yard-link_stdlib: #{ log_str }"
+  end # .dump
   
 end # module LinkStdlib
 

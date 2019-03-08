@@ -1,7 +1,8 @@
 #!/usr/bin/env ruby
 
 require "bundler/setup"
-require "yard/link_stdlib"
+# require "yard/link_stdlib"
+require 'yard'
 
 
 Pathname.
@@ -23,6 +24,7 @@ rescue LoadError => error
   require "irb"
   IRB.start
 else
+  Pry.config.should_load_rc = false
   Pry.start
 end
 

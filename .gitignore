@@ -33,7 +33,8 @@
 ## Documentation cache and generated files:
 /.yardoc/
 /_yardoc/
-/doc/
+#/doc/ # I like /site/
+/site/
 /rdoc/
 
 ## Environment normalization:
