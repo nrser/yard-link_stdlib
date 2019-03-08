@@ -73,7 +73,7 @@ module HtmlHelper
   # 
   def link_object obj, title = nil, anchor = nil, relative = true
     # See what the super method can do...
-    super_link = super()
+    super_link = super
 
     # Bail out unless `super` returned a {String}, which I'm guessing would be
     # `nil`, but not sure.
@@ -94,7 +94,7 @@ module HtmlHelper
         name: super_link,
         url: url
       
-      %(<a href="#{ url }">#{ CGI.escapeHTML super_link }</a>)
+      %(<a href="#{ URI.escape url }">#{ CGI.escapeHTML super_link }</a>)
 
     else
       LinkStdlib.dump "Got nada.",
