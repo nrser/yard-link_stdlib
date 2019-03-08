@@ -1,5 +1,6 @@
 # encoding: UTF-8
 # frozen_string_literal: true
+# doctest: true
 
 # Requirements
 # =======================================================================
@@ -21,192 +22,458 @@ require_relative "./link_stdlib/html_helper"
 # =======================================================================
 
 module  YARD
-module  LinkStdlib
 
 
 # Definitions
 # =======================================================================
 
-# Constants
-# ----------------------------------------------------------------------------
+module  LinkStdlib
 
-# Available helper modules by their format (as found in `options.format`).
-# 
-# We only cover `:html` for the moment, but may add more in the future.
-# 
-# @return [Hash<Symbol, Module>]
-# 
-HELPERS_BY_FORMAT = {
-  html: HtmlHelper,
-}.freeze
-
-
-# The {Proc} that we add to {YARD::Templates::Template.extra_includes} on
-# {.install!}. The proc accepts template options and responds with the helper
-# module corresponding to the format (if any - right now we only handle 
-# `:html`).
-# 
-# We want this to be a constant so we can tell if it's there and
-# avoid ever double-adding it.
-# 
-# @return [Proc<YARD::Templates::TemplateOptions -> Module?>]
-# 
-HELPER_FOR_OPTIONS = proc { |options|
-  HELPERS_BY_FORMAT[ options.format ]
-}.freeze
+  # Constants
+  # ============================================================================
+  
+  DEFAULT_DOMAIN = "docs.ruby-lang.org"
+  
+  DEFAULT_LANG = 'en'
+  
+  DEFAULT_HTTP_URLS = true
+  
+  # Available helper modules by their format (as found in `options.format`).
+  # 
+  # We only cover `:html` for the moment, but may add more in the future.
+  # 
+  # @return [Hash<Symbol, Module>]
+  # 
+  HELPERS_BY_FORMAT = {
+    html: HtmlHelper,
+  }.freeze
 
 
-# Add the {HELPER_FOR_OPTIONS} {Proc} to
-# {YARD::Templates::Template.extra_includes} (if it's not there already).
-# 
-# @see https://www.rubydoc.info/gems/yard/YARD/Templates/Template#extra_includes-class_method
-# 
-# @return [nil]
-# 
-def self.install!
-  # NOTE  Due to YARD start-up order, this happens *before* log level is set,
-  #       so the `--debug` CLI switch won't help see it... don't know a way to
-  #       at the moment.
-  log.debug "Installing `yard-link_stdlib` plugin..."
-
-  unless YARD::Templates::Template.extra_includes.include? HELPER_FOR_OPTIONS
-    YARD::Templates::Template.extra_includes << HELPER_FOR_OPTIONS
+  # The {Proc} that we add to {YARD::Templates::Template.extra_includes} on
+  # {.install!}. The proc accepts template options and responds with the helper
+  # module corresponding to the format (if any - right now we only handle 
+  # `:html`).
+  # 
+  # We want this to be a constant so we can tell if it's there and
+  # avoid ever double-adding it.
+  # 
+  # @return [Proc<YARD::Templates::TemplateOptions -> Module?>]
+  # 
+  HELPER_FOR_OPTIONS = proc { |options|
+    HELPERS_BY_FORMAT[ options.format ]
+  }.freeze
+  
+  
+  # Singleton Methods
+  # ==========================================================================
+  
+  # @!group Configuration Singleton Methods
+  # --------------------------------------------------------------------------
+  
+  # Configured to build `https://` URLs by default?
+  # 
+  # @example Default configuration responds with {DEFAULT_HTTP_URLS}
+  #   YARD::LinkStdlib.https_urls?
+  #   #=> true
+  # 
+  # @return [Boolean]
+  # 
+  def self.https_urls?
+    DEFAULT_HTTP_URLS
+  end # .https_urls?
+  
+  
+  # Configured domain used as the default to {.build_url}.
+  # 
+  # @example Default configuration responds with {DEFAULT_DOMAIN}
+  #   YARD::LinkStdlib.domain
+  #   #=> 'docs.ruby-lang.org'
+  # 
+  # @return [String]
+  # 
+  def self.domain
+    DEFAULT_DOMAIN
+  end # .domain
+  
+  
+  # Documentation language to {.build_url} for (when not overridden in method
+  # call).
+  # 
+  # @example Default configuration responds with {DEFAULT_LANG}
+  #   YARD::LinkStdlib.lang
+  #   #=> 'en'
+  # 
+  # @return [String]
+  # 
+  def self.lang
+    DEFAULT_LANG
+  end # .lang
+  
+  # @!endgroup Configuration Singleton Methods # *****************************
+  
+  
+  # @!group Resolving Names Singleton Methods
+  # --------------------------------------------------------------------------
+  
+  # Build a URL given a relative path to the document (see {.rel_path_for}).
+  # 
+  # Components may all be individually overridden via keyword arguments;
+  # otherwise the current configuration values are used.
+  # 
+  # Format targets <docs.ruby-lang.org>, but *may* work for local or 
+  # alternative versions as well.
+  # 
+  # @note
+  #   Will **NOT** generate working URLs for <ruby-doc.org> because they
+  #   divide language docs into "core" and "stdlib" using an unknown methodology
+  #   (it's *probably* that C code is in "core" and Ruby in "stdlib", but I'm
+  #   not sure, and not sure who would be).
+  #
+  # @example Using defaults
+  #   YARD::LinkStdlib.build_url 'String.html'
+  #   #=> 'https://docs.ruby-lang.org/en/2.3.0/String.html'
+  # 
+  # @example Manually override components
+  #   YARD::LinkStdlib.build_url 'String.html',
+  #     https: false,
+  #     domain: 'example.com',
+  #     lang: 'ja',
+  #     version: '2.6.0'
+  #   #=> 'http://example.com/ja/2.6.0/String.html'
+  # 
+  # @param [String] rel_path
+  #   Relative path to the document, as returned from {.rel_path_for}.
+  # 
+  # @param [Boolean] https
+  #   Build `https://` URLs (versus `http://`)? Defaults to {.https_urls?}.
+  # 
+  # @param [String] domain
+  #   Domain docs are hosted at. Defaults to {.domain}.
+  # 
+  # @param [String] lang
+  #   Language to link to, defaults to {.lang}.
+  #   
+  #   Note that at the time of writing (2019.03.08) only English ("en") and
+  #   Japanese ("ja") are available on <docs.ruby-lang.org>.
+  # 
+  # @param [#to_s] version
+  #   Ruby version for the URL. Anything that supports `#to_s` will work, but 
+  #   meant for use with {String} or {Gem::Version} (the later of which being
+  #   what {RubyVersion.minor} returns).
+  #   
+  #   Note that <docs.ruby-lang.org> uses only *minor* version-level resolution:
+  #   you can link to `2.3.0` or `2.4.0`, but not `2.3.7`, `2.4.4`, etc.
+  # 
+  # @return [String]
+  #   Fully-formed URL, ready for clicks!
+  # 
+  def self.build_url  rel_path,
+                      https: self.https_urls?,
+                      domain: self.domain,
+                      lang: self.lang,
+                      version: RubyVersion.minor
+    File.join \
+      "http#{ https ? 's' : '' }://",
+      domain,
+      lang,
+      version.to_s,
+      rel_path
   end
-
-  YARD::CLI::CommandParser.commands[:stdlib] ||= YARD::CLI::LinkStdlib
-
-  nil
-end # .install!
-
-
-# General Utilities
-# ----------------------------------------------------------------------------
-
-# @param [Symbol | #to_s] value
-#   Either an object whose string representation expands to a path to an
-#   existing directory, or one of the following symbols:
-#   
-#   1.  `:system`, `:global` - `/tmp/yard-link_stdlib`
-#   2.  
-# 
-# @return [Pathname]
-#   The assigned path.
-# 
-def self.tmp_dir= value
-  @tmp_dir = case value
-  when :system, :global
-    Pathname.new '/tmp/yard-link_stdlib'
-  when :user
-    Pathname.new( '~/tmp/yard-link_stdlib' ).expand_path
-  when :gem, :install
-    ROOT.join 'tmp'
-  when :project
-    Pathname.getwd.join 'tmp', 'yard-link_stdlib'
-  else
-    dir = Pathname.new( value.to_s ).expand_path
-
-    unless dir.directory?
-      raise ArgumentError,
-        "When assigning a custom tmp_dir path it must be an existing " +
-        "directory, received #{ value.to_s.inspect }"
+  
+  
+  # Get the relative path for the URL of an online stdlib document given the
+  # code object's name.
+  #
+  # @example
+  #   YARD::LinkStdlib.rel_path_for 'String'
+  #   #=> 'String.html'
+  # 
+  # @param [String] name
+  # 
+  # @return [nil]
+  #   The (normalized) `name` was not found in the {ObjectMap}.
+  # 
+  # @return [String]
+  #   The relative path to the online doc.
+  # 
+  def self.rel_path_for name
+    ObjectMap.current.data[ normalize_name name ]
+  end # .path_for
+  
+  
+  # @todo Document url_for method.
+  # 
+  # @example Using defaults
+  #   YARD::LinkStdlib.url_for 'String'
+  #   #=> 'https://docs.ruby-lang.org/en/2.3.0/String.html'
+  # 
+  # @example Manually override components
+  #   YARD::LinkStdlib.url_for 'String',
+  #     https: false,
+  #     domain: 'example.com',
+  #     lang: 'ja',
+  #     version: '2.6.0'
+  #   #=> 'http://example.com/ja/2.6.0/String.html'
+  # 
+  # @param [String] name
+  #   Name of the code object.
+  # 
+  # @param [Hash<Symbol, Object>] url_options
+  #   Passed to {.build_url}.
+  # 
+  # @return [nil]
+  #   The (normalized) `name` was not found in the {ObjectMap}.
+  # 
+  # @return [String]
+  #   The fully-formed URL to the online doc.
+  # 
+  def self.url_for name, **url_options
+    if (rel_path = rel_path_for name)
+      build_url rel_path, **url_options
     end
-  end
+  end # .url_for
+  
+  # @!endgroup Resolving Names Singleton Methods # ***************************
+  
+  
+  # @!group Querying Singleton Methods
+  # --------------------------------------------------------------------------
+  
+  # Find names in the {ObjectMap.current} that match terms.
+  # 
+  # Terms are tested with `#===`, allowing use of {String}, {Regexp}, and 
+  # potentially others.
+  # 
+  # `mode` controls if names must match any or all terms.
+  # 
+  # @param [Array<Object>] terms
+  #   Objects that will be tested with `#===` against names in the map to select 
+  #   results.
+  # 
+  # @return [Array<String>]
+  #   Matching names.
+  # 
+  def self.grep *terms, mode: :any
+    ObjectMap.
+      current.
+      names.
+      select { |key|
+        case mode
+        when :any
+          terms.any? { |term| term === key }
+        when :all
+          terms.all? { |term| term === key }
+        else
+          raise ArgumentError,
+            "Bad mode, expected `:any` or `:all`, found #{ mode.inspect }"
+        end
+      }.
+      sort
+  end # .grep
+  
+  # @!endgroup Querying Singleton Methods # **********************************
+  
+  
+  # @!group Installation Singleton Methods
+  # --------------------------------------------------------------------------
 
-  FileUtils.mkdir_p @tmp_dir unless @tmp_dir.exist?
+  # Add the {HELPER_FOR_OPTIONS} {Proc} to
+  # {YARD::Templates::Template.extra_includes} (if it's not there already).
+  # 
+  # @see https://www.rubydoc.info/gems/yard/YARD/Templates/Template#extra_includes-class_method
+  # 
+  # @return [nil]
+  # 
+  def self.install!
+    # NOTE  Due to YARD start-up order, this happens *before* log level is set,
+    #       so the `--debug` CLI switch won't help see it... don't know a way to
+    #       at the moment.
+    log.debug "Installing `yard-link_stdlib` plugin..."
 
-  @tmp_dir
-end
+    unless YARD::Templates::Template.extra_includes.include? HELPER_FOR_OPTIONS
+      YARD::Templates::Template.extra_includes << HELPER_FOR_OPTIONS
+    end
+
+    YARD::CLI::CommandParser.commands[:stdlib] ||= YARD::CLI::LinkStdlib
+
+    nil
+  end # .install!
+  
+  # @!endgroup Installation Singleton Methods # ******************************
 
 
-# Get where to put temporary shit, most Ruby source code that's been downloaded
-# to generate the link maps from.
-# 
-# @return [Pathname]
-# 
-def self.tmp_dir &block
-  if @tmp_dir.nil?
-    self.tmp_dir = repo? ? :gem : :user
-  end
+  # General Utilities
+  # ----------------------------------------------------------------------------
+  
+  # Normalize a stdlib name: remove "::" prefix if present, and convert "." to
+  # "::".
+  # 
+  # @example Just passing through
+  #   YARD::LinkStdlib.normalize_name 'String#length'
+  #   #=> 'String#length'
+  # 
+  # @example Strip "::" prefix
+  #   YARD::LinkStdlib.normalize_name '::String#length'
+  #   #=> 'String#length'
+  # 
+  # @example Puke if it's not a {String}
+  #   YARD::LinkStdlib.normalize_name 123
+  #   #=> raise TypeError, %(`name` must be a String, given Fixnum: 123)
+  # 
+  # @param [::String] name
+  #   Code object name, as it may appear in YARD.
+  # 
+  # @return [::String]
+  # 
+  def self.normalize_name name
+    unless name.is_a? ::String
+      raise TypeError,
+        "`name` must be a String, given #{ name.class }: #{ name.inspect }"
+    end
+  
+    if name.start_with? '::'
+      name[ 2..-1 ]
+    else
+      name
+    end
+    
+    name.gsub '.', '::'
+  end # .normalize_name
+  
+  
+  # Set the {.tmp_dir} where we put temporary files (like Ruby source 
+  # downloads).
+  # 
+  # @param [Symbol | #to_s] value
+  #   Either an object whose string representation expands to a path to an
+  #   existing directory, or one of the following symbols:
+  #   
+  #   1.  `:system`, `:global` → `/tmp/yard-link_stdlib`.
+  #       
+  #   2.  `:user` → `~/tmp/yard-link_stdlib`.
+  #       
+  #   3.  `:gem`, `:install` → `tmp` relative to `yard-link_stdlib`'s root
+  #       directory ({YARD::LinkStdlib::ROOT}).
+  # 
+  # @return [Pathname]
+  #   The assigned path.
+  # 
+  def self.tmp_dir= value
+    @tmp_dir = case value
+    when :system, :global
+      Pathname.new '/tmp/yard-link_stdlib'
+    when :user
+      Pathname.new( '~/tmp/yard-link_stdlib' ).expand_path
+    when :gem, :install
+      ROOT.join 'tmp'
+    when :project
+      Pathname.getwd.join 'tmp', 'yard-link_stdlib'
+    else
+      dir = Pathname.new( value.to_s ).expand_path
 
-  if block
-    Dir.chdir @tmp_dir, &block
-  else
+      unless dir.directory?
+        raise ArgumentError,
+          "When assigning a custom tmp_dir path it must be an existing " +
+          "directory, received #{ value.to_s.inspect }"
+      end
+    end
+
+    FileUtils.mkdir_p @tmp_dir unless @tmp_dir.exist?
+
     @tmp_dir
   end
-end
 
 
-# Run a {Kernel.system}, raising if it fails.
-# 
-# @param [Array] *args
-#   See {Kernel.system}.
-# 
-# @return [true]
-# 
-# @raise [SystemCallError]
-#   If the command fails.
-# 
-def self.system! *args
-  opts  = args[-1].is_a?( Hash )  ? args.pop : {}
-  env   = args[0].is_a?( Hash )   ? args.shift : {}
-
-  log.info [
-    "Making system call:",
-    "\t#{ Shellwords.join args }",
-    ( opts.empty? ? nil : "\toptions: #{ opts.inspect }" ),
-    ( env.empty? ? nil : "\tenv: #{ env.inspect }" ),
-  ].compact.join( "\n" )
-
-  Kernel.system( *args ).tap { |success|
-    unless success
-      raise SystemCallError.new \
-        %{ Code #{ $?.exitstatus } error executing #{ args.inspect } },
-        $?.exitstatus
+  # Get where to put temporary shit, most Ruby source code that's been downloaded
+  # to generate the link maps from.
+  # 
+  # @return [Pathname]
+  # 
+  def self.tmp_dir &block
+    if @tmp_dir.nil?
+      self.tmp_dir = repo? ? :gem : :user
     end
-  }
-end
+
+    if block
+      Dir.chdir @tmp_dir, &block
+    else
+      @tmp_dir
+    end
+  end
 
 
-# Make a `GET` request. Follows redirects. Handles SSL.
-# 
-# @param [String] url
-#   What ya want.
-# 
-# @param [Integer] redirect_limit
-#   Max number of redirects to follow before it gives up.
-# 
-# @return [Net::HTTPResponse]
-#   The first successful response that's not a redirect.
-# 
-# @raise [Net::HTTPError]
-#   If there was an HTTP error.
-# 
-# @raise 
-# 
-def self.http_get url, redirect_limit = 5
-  raise "Too many HTTP redirects" if redirect_limit < 0
+  # Run a {Kernel.system}, raising if it fails.
+  # 
+  # @param [Array] *args
+  #   See {Kernel.system}.
+  # 
+  # @return [true]
+  # 
+  # @raise [SystemCallError]
+  #   If the command fails.
+  # 
+  def self.system! *args
+    opts  = args[-1].is_a?( Hash )  ? args.pop : {}
+    env   = args[0].is_a?( Hash )   ? args.shift : {}
 
-  uri = URI url
-  request = Net::HTTP::Get.new uri.path
-  response = Net::HTTP.start(
-    uri.host,
-    uri.port,
-    use_ssl: uri.scheme == 'https',
-  ) { |http| http.request request }
+    log.info [
+      "Making system call:",
+      "\t#{ Shellwords.join args }",
+      ( opts.empty? ? nil : "\toptions: #{ opts.inspect }" ),
+      ( env.empty? ? nil : "\tenv: #{ env.inspect }" ),
+    ].compact.join( "\n" )
+
+    Kernel.system( *args ).tap { |success|
+      unless success
+        raise SystemCallError.new \
+          %{ Code #{ $?.exitstatus } error executing #{ args.inspect } },
+          $?.exitstatus
+      end
+    }
+  end
+
+
+  # Make a `GET` request. Follows redirects. Handles SSL.
+  # 
+  # @param [String] url
+  #   What ya want.
+  # 
+  # @param [Integer] redirect_limit
+  #   Max number of redirects to follow before it gives up.
+  # 
+  # @return [Net::HTTPResponse]
+  #   The first successful response that's not a redirect.
+  # 
+  # @raise [Net::HTTPError]
+  #   If there was an HTTP error.
+  # 
+  # @raise 
+  # 
+  def self.http_get url, redirect_limit = 5
+    raise "Too many HTTP redirects" if redirect_limit < 0
+
+    uri = URI url
+    request = Net::HTTP::Get.new uri.path
+    response = Net::HTTP.start(
+      uri.host,
+      uri.port,
+      use_ssl: uri.scheme == 'https',
+    ) { |http| http.request request }
+    
+    case response
+    when Net::HTTPSuccess
+      response
+    when Net::HTTPRedirection
+      http_get response['location'], redirect_limit - 1
+    else
+      response.error!
+    end 
+  end
   
-  case response
-  when Net::HTTPSuccess
-    response
-  when Net::HTTPRedirection
-    http_get response['location'], redirect_limit - 1
-  else
-    response.error!
-  end 
-end
+end # module LinkStdlib
 
 
 # /Namespace
 # =======================================================================
 
-end # module LinkStdlib
 end # module YARD

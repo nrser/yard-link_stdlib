@@ -58,7 +58,7 @@ class ObjectMap
   @@current = nil
 
   
-  # Class Methods
+  # Singleton Methods
   # ========================================================================
 
   def self.data_dir= path
@@ -200,8 +200,28 @@ class ObjectMap
 
     @data
   end
+  
+  
+  # Names of the objects in {#data} (equivalent to `self.data.keys`).
+  # 
+  # @param [Boolean] reload
+  #   When `true`, reload the {#data} from disk first.
+  # 
+  # @return [Array<String>]
+  # 
+  def names reload: false
+    data( reload: reload ).keys
+  end
+  
+  
+  # Language Integration Instance Methods
+  # --------------------------------------------------------------------------
 
-
+  # Compare {ObjectMap} instances by their {#version} (used to sort them).
+  # 
+  # @return [Fixnum]
+  #   `0` is equal, negatives and positives denote order.
+  # 
   def <=> other
     version <=> other.version
   end

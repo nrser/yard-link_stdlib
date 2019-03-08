@@ -43,11 +43,12 @@ Gem::Specification.new do |spec|
   # ----------------------------------------------------------------------------
 
   spec.add_dependency "yard"
-
+  
+  
   # Development Dependencies
   # ----------------------------------------------------------------------------
 
-  spec.add_development_dependency "bundler", "~> 1.16"
+  spec.add_development_dependency "bundler", ">= 1.16"
   spec.add_development_dependency "rake", "~> 12.3"
   spec.add_development_dependency "rspec", "~> 3.7"
 
@@ -63,5 +64,10 @@ Gem::Specification.new do |spec|
 
   # Provider for `commonmarker`, the new GFM lib
   spec.add_development_dependency 'yard-commonmarker', '~> 0.5.0'
+  
+  
+  ### Doctest - Exec-n-check YARD @example tags
+  
+  spec.add_development_dependency 'yard-doctest', '~> 0.1.16'
 
 end

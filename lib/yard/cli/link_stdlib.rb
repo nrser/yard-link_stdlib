@@ -4,17 +4,16 @@
 # Requirements
 # =======================================================================
 
-# Stdlib
-# -----------------------------------------------------------------------
+### Stdlib ###
 
-# Deps
-# -----------------------------------------------------------------------
+require 'optparse'
+
+### Deps ###
 
 # We need {YARD::CLI::Command}
 require 'yard'
 
-# Project / Package
-# -----------------------------------------------------------------------
+### Project / Package ###
 
 require 'yard/link_stdlib/ruby_source'
 
@@ -60,6 +59,106 @@ class LinkStdlib < Command
       YARD::LinkStdlib::ObjectMap.new( version ).make
     end
   end
+  
+  
+  class Path < Command
+    def description
+      "Print the online doc relative path for a stdlib name"
+    end
+    
+    def run name
+      path = YARD::LinkStdlib.path_for name
+      
+      if path.nil?
+        $stderr.puts "Name not found: #{ name.inspect }"
+        exit false
+      end
+      
+      puts path
+      exit true
+    end
+  end
+  
+  
+  class URL < Command
+    def description
+      "Print the online doc URL for a stdlib name"
+    end
+    
+    def run name
+      url = YARD::LinkStdlib.url_for name
+      
+      if url.nil?
+        $stderr.puts "Name not found: #{ name.inspect }"
+        exit false
+      end
+      
+      puts url
+      exit true
+    end
+  end
+  
+  
+  class Search < Command
+    def description
+      "Find stdlib names that match patterns"
+    end
+    
+    def run *args
+      opts = {
+        regexp: false,
+      }
+      
+      OptionParser.new { |op|
+        op.banner = "Usage: yard stdlib search [OPTIONS] TERMS..."
+        op.separator "" 
+        op.separator description
+        op.separator ""
+        op.separator "Examples:"
+        op.separator ""
+        op.separator "  1.  {Pathname} instance methods"
+        op.separator "      "
+        op.separator "      yard stdlib search --regexp '^Pathname#'"
+        op.separator ""
+        op.separator "  2. All `#to_s` methods"
+        op.separator "      "
+        op.separator "      yard stdlib search --regexp '#to_s$'"
+        op.separator ""
+        op.separator "Options:"
+        
+        op.on( '-r', '--regexp', %(Parse TERMS as {Regexp}) ) do |regexp|
+          opts[ :regexp ] = regexp
+        end
+        
+        op.on_tail( '-h', '--help', %(You're looking at it!) ) {
+          log.puts op
+          exit true
+        }
+      }.parse! args
+      
+      if args.empty?
+        YARD::LinkStdlib::ObjectMap.
+          current.
+          names.
+          sort.
+          each { |key| log.puts key }
+        exit true
+      end
+      
+      terms = if opts[ :regexp ]
+        args.map { |arg| Regexp.new arg }
+      else
+        args
+      end
+      
+      # log.puts terms.inspect
+      
+      names = YARD::LinkStdlib.grep *terms
+      
+      names.each { |name| log.puts name }
+      exit true
+    end
+  end
 
 
   class Help < Command
@@ -95,6 +194,9 @@ class LinkStdlib < Command
       help: Help,
       list: List,
       add: Add,
+      path: Path,
+      url: URL,
+      search: Search,
     }
   end
   

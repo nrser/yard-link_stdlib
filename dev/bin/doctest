@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# Run `yard doctest` only on `.rb` files in `//lib` that have a
+# 
+#     # doctest: true
+# 
+# "magic" comment.
+# 
+
+bundle exec \
+  yard doctest $@ \
+    $(rg --files-with-matches '# doctest: true' --glob='*.rb' ./lib/)

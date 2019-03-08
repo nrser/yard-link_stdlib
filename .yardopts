@@ -3,6 +3,7 @@
 --markup markdown
 --plugin yard-commonmarker
 --plugin yard-link_stdlib
+--plugin yard-doctest
 --private
 --protected
 lib/**/*.rb
