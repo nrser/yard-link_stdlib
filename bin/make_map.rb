@@ -6,10 +6,7 @@ require 'zlib'
 
 require 'rdoc/rdoc'
 
-# Get paths in order - we want to be in the Ruby repo checkout
 GEM_ROOT = Pathname.new( __dir__ ).join( '..' ).expand_path
-# REPO = GEM_ROOT.join 'tmp', 'ruby'
-# REPO = GEM_ROOT.join 'tmp', 'ruby-2_5_1'
 
 class RDoc::RDoc
   # Pretty much a copy of `RDoc::RDoc#document`, just with the `#generate` step
@@ -24,6 +21,8 @@ class RDoc::RDoc
       @options = load_options
       @options.parse options
     end
+    
+    @options.visibility = :nodoc
 
     if @options.pipe then
       handle_pipe
@@ -96,7 +95,7 @@ def main args
     end
   end
 
-  FileUtils.mkdir_p dest.dirname unless dest.dirname.exist?
+  FileUtils.mkdir_p( dest.dirname ) unless dest.dirname.exist?
 
   Zlib::GzipWriter.open dest do |gz|
     gz.write JSON.pretty_generate( map )
