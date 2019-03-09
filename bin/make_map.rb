@@ -1,5 +1,28 @@
 #!/usr/bin/env ruby
 
+##############################################################################
+# Make a {YARD::LinkStdlib::ObjectMap} Data File
+# ============================================================================
+#
+# Running this script is what creates the `//maps/ruby-M.m.p.json.gz` data files
+# index object names to their relative URL path in the generated documentation,
+# which is in turn how the plugin generates document URLs.
+#
+# Coming back now (2019.03.09) I don't remember a ton of how ro why things got
+# this way (comment your code, kids!). From the commit history, I can see that
+# this script came over from initial work somewhere in `nrser/nrser.rb`.
+#
+# I think I remember this needing to run in a separate child process (versus
+# just in the main `yard` one), but I don't recall why.
+#
+# It might have just been to try to emulate `rdoc` as much as possible, and
+# might no longer be needed given present knowledge and understanding, but I
+# think I'm just going to leave it for now, because it does work, and to fuck
+# with it I would probably want some sort of testing set up to check I'm not
+# breaking things, and that's a whole 'nother thing...
+#
+##############################################################################
+
 require 'pathname'
 require 'fileutils'
 require 'zlib'
@@ -9,6 +32,7 @@ require 'rdoc/rdoc'
 GEM_ROOT = Pathname.new( __dir__ ).join( '..' ).expand_path
 
 class RDoc::RDoc
+  
   # Pretty much a copy of `RDoc::RDoc#document`, just with the `#generate` step
   # commented-out.
   def almost_document options = ARGV
@@ -22,6 +46,8 @@ class RDoc::RDoc
       @options.parse options
     end
     
+    # We want **all** of the names available, so force the highest visibility
+    # level.
     @options.visibility = :nodoc
 
     if @options.pipe then
@@ -54,11 +80,15 @@ class RDoc::RDoc
     gen_klass = @options.generator
 
     @generator = gen_klass.new @store, @options
-
+    
+    # What we *don't* do:
     # generate
+    
     nil
   end # #almost_document
+  
 end # class RDoc::RDoc
+
 
 def main args
   src = Pathname.new( args.shift ).expand_path
