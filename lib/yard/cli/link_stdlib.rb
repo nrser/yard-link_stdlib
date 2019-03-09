@@ -180,10 +180,10 @@ class LinkStdlib < Command
         
       }.parse! args
       
-      version = check_args! args, 1
-    
-      log.info "Adding object map for Ruby #{ version }..."
-      YARD::LinkStdlib::ObjectMap.add version, force: opts[ :force ]
+      args.each do |version|    
+        log.info "Adding object map for Ruby #{ version }..."
+        YARD::LinkStdlib::ObjectMap.add version, force: opts[ :force ]
+      end
       
       exit true
     end
@@ -352,25 +352,6 @@ class LinkStdlib < Command
 
     target.run( *args )
   end
-
-  
-  protected
-  # ========================================================================
-    
-    # @todo Document respond method.
-    # 
-    # @param [type] arg_name
-    #   @todo Add name param description.
-    # 
-    # @return [return_type]
-    #   @todo Document return value.
-    # 
-    def respond response
-      log.puts response unless response.nil?
-      exit true
-    end # #respond
-
-  public # end protected ***************************************************
 
   
 end # class LinkStdlib
