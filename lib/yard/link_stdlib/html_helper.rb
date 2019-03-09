@@ -94,7 +94,10 @@ module HtmlHelper
         name: super_link,
         url: url
       
-      %(<a href="#{ URI.escape url }">#{ CGI.escapeHTML super_link }</a>)
+      # NOTE  `url` is **not** escaped because it may contains '#' followed
+      #       by a fragment, and that needs to be preserved. At this point,
+      #       I'm just assuming it's ready for use as-is.
+      %(<a href="#{ url }">#{ CGI.escapeHTML super_link }</a>)
 
     else
       LinkStdlib.dump "Got nada.",
