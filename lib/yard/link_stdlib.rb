@@ -350,10 +350,10 @@ module  LinkStdlib
   end
 
 
-  # Run a {Kernel.system}, raising if it fails.
+  # Run a {Kernel#system}, raising if it fails.
   # 
   # @param [Array] args
-  #   See {Kernel.system}.
+  #   See {Kernel#system}.
   # 
   # @return [true]
   # 
