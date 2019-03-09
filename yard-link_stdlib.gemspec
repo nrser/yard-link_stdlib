@@ -51,8 +51,9 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "bundler", ">= 1.16"
   spec.add_development_dependency "rake", "~> 12.3"
   spec.add_development_dependency "rspec", "~> 3.7"
-
-  # Nicer REPL experience
+  
+  ### Pry - Nicer REPL experience & CLI-based debugging ###
+  
   spec.add_development_dependency "pry", '~> 0.11.3'
 
   # Supposed to drop into pry as a debugger on unhandled exceptions, but I 
@@ -61,9 +62,15 @@ Gem::Specification.new do |spec|
 
   # Move around the stack when you debug with `pry`, really sweet
   spec.add_development_dependency "pry-stack_explorer", '~> 0.4.9'
+  
+  
+  ### YARD - Doc Generation ###
 
   # Provider for `commonmarker`, the new GFM lib
   spec.add_development_dependency 'yard-commonmarker', '~> 0.5.0'
+  
+  # My `yard clean` command
+  spec.add_development_dependency 'yard-clean', '~> 0.1.0'
   
   
   ### Doctest - Exec-n-check YARD @example tags

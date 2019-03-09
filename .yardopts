@@ -4,6 +4,7 @@
 --plugin yard-commonmarker
 --plugin yard-link_stdlib
 --plugin yard-doctest
+--plugin yard-clean
 --private
 --protected
 lib/**/*.rb
