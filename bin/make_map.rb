@@ -84,15 +84,23 @@ def main args
   map = {}
 
   rd.store.all_classes_and_modules.each do |mod|
-    map[mod.full_name] = mod.path
-
-    mod.class_method_list.each do |class_method|
-      map[class_method.full_name] = class_method.path
-    end
-
-    mod.instance_method_list.each do |instance_method|
-      map[instance_method.full_name] = instance_method.path
-    end
+    # if mod.full_name == 'Gem::Specification'
+    #   require 'pry'
+    #   Pry.config.should_load_rc = false
+    #   binding.pry
+    # end
+    
+    [
+      mod,
+      mod.constants,
+      mod.class_attributes,
+      mod.class_method_list,
+      mod.instance_attributes,
+      mod.instance_method_list,
+    ].flatten.each { |entry|
+      map[ entry.full_name ] = entry.path
+    }
+    
   end
 
   FileUtils.mkdir_p( dest.dirname ) unless dest.dirname.exist?
