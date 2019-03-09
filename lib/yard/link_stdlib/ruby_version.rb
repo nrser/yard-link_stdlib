@@ -102,7 +102,7 @@ module RubyVersion
   # we were happy with from the gemspec.
   # 
   # @param [:minimum_supported, :latest_stable, :current_runtime] value
-  #   Just picks which of these versions {#fallback} will use:
+  #   Just picks which of these versions {.fallback} will use:
   #   
   #   1.  {MINIMUM_SUPPORTED}
   #   2.  {LATEST_STABLE}

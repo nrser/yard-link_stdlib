@@ -55,13 +55,13 @@ def self.repo?
   ROOT.join( 'dev' ).directory?
 end
 
-# {Singleton} extension of {Gem::Version} that loads {Locd::VERSION} and
+# {Singleton} extension of {Gem::Version} that loads {VERSION} and
 # provides some convenient methods.
 # 
 class Version < Gem::Version
   include ::Singleton
 
-  # Private method to instantiate the {#instance} using the {Locd::VERSION}
+  # Private method to instantiate the {.instance} using the {VERSION}
   # {String}.
   # 
   # @return [Version]
@@ -74,7 +74,7 @@ class Version < Gem::Version
   # instances.
   private_class_method :new
 
-  # Proxies to the {#instance}'s {#dev?}.
+  # Proxies to the {.instance}'s {#dev?}.
   # 
   # @return (see #dev?)
   # 
