@@ -64,8 +64,8 @@ def main args
   src = Pathname.new( args.shift ).expand_path
   dest = Pathname.new( args.shift ).expand_path
   
-  puts "src: #{ src.inspect }"
-  puts "dest: #{ dest.inspect }"
+  puts "src: #{ src }"
+  puts "dest: #{ dest }"
 
   # RDoc needs this output dir arg in `ARGV` or it will bail out with an error
   # due to `//doc` existing, even though we don't ever actually write to any of
