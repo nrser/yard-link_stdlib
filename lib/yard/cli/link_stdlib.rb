@@ -230,24 +230,58 @@ class LinkStdlib < Command
     USAGE = "yard stdlib search [OPTIONS] TERMS..."
     
     def run *args
+      # Default format is `:plain`
+      opts[ :format ] = :plain
+      
       OptionParser.new { |op|
         add_header op, <<~END
           Examples:
           
             1.  {Pathname} instance methods
                 
-                yard stdlib search '^Pathname#'
+                    $ yard stdlib search '^Pathname#'
           
-            2. All `#to_s` methods
+            2.  All `#to_s` methods
                 
-                yard stdlib search '#to_s$'
+                    $ yard stdlib search '#to_s$'
+            
+            3.  Print results in serialized formats.
+                
+                All `#to_s` instance methods in JSON:
+                
+                    $ yard stdlib search --format=json '#to_s$'
+                
+                Supports a short `-f` flag and first-letter formats too.
+                
+                Instance methods of {Array} in YAML:
+                
+                    $ yard stdlib search -f y '^Array#'
         END
         
         add_version_opt op
         
         op.on(  '-u', '--urls',
                 %(Print doc URLs along with names)
-        ) { |urls| opts[ :urls ] = urls }
+        ) { |urls| opts[ :urls ] = !!urls }
+        
+        op.on(  '-f FORMAT', '--format=FORMAT',
+                %(Specify print format: (p)lain, (j)son or (y)aml)
+        ) { |format|
+          opts[ :format ] = \
+            case format.downcase
+            when 'p', 'plain'
+              :plain
+            when 'j', 'json'
+              :json
+            when 'y', 'yaml'
+              :yaml
+            else
+              log.fatal \
+                %(Unknown format - expected "plain", "json" or "yaml"; ) +
+                %(given #{ format.inspect })
+              exit false
+            end
+        }
         
       }.parse! args
       
@@ -266,15 +300,31 @@ class LinkStdlib < Command
       
       names = YARD::LinkStdlib.grep *terms
       
-      names.each { |name|
-        line = \
-          if opts[ :urls ]
-            "#{ name } <#{ YARD::LinkStdlib::ObjectMap.current.url_for name }>"
+      results = \
+        if opts[ :urls ]
+          names.each_with_object( {} ) { |name, hash|
+            hash[ name ] = YARD::LinkStdlib::ObjectMap.current.url_for name
+          }
+        else
+          names
+        end
+      
+      case opts[ :format ]
+      when :plain
+        results.each do |entry|
+          if entry.is_a? ::Array
+            log.puts "#{ entry[0] } <#{ entry[ 1 ]}>"
           else
-            name
+            log.puts entry
           end
-        log.puts line
-      }
+        end
+      when :json
+        require 'json'
+        log.puts JSON.pretty_generate( results )
+      when :yaml
+        require 'yaml'
+        log.puts YAML.dump( results )
+      end
       
       exit true
     end
