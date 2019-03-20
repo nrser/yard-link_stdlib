@@ -294,7 +294,14 @@ class LinkStdlib < Command
         exit true
       end
       
-      terms = args.map { |arg| Regexp.new arg }
+      terms = args.map { |arg|
+        begin
+          Regexp.new arg
+        rescue RegexpError => error
+          Regexp.new \
+            Regexp.escape( YARD::LinkStdlib.normalize_name( arg ) )
+        end
+      }
       
       log.debug "Terms:\n  " + terms.map( &:to_s ).join( "\n  " )
       

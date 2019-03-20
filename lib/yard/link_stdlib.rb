@@ -64,6 +64,31 @@ module  LinkStdlib
   }.freeze
   
   
+  # Names of valid Ruby operator methods. Used to form 
+  # {OPERATOR_METHOD_NAME_REGEXP_FRAGMENT}.
+  # 
+  # @return [::Array<::String>]
+  # 
+  OPERATOR_METHOD_NAMES = \
+    (
+      %w([] []= ** ~ ~ @+ @- * / % + - >> << & ^ |) +
+      %w(<= < > >= <=> == === != =~ !~)
+    ).map( &:freeze )
+  
+  
+  # {Regexp} source fragment that matches a Ruby operator method name.
+  # 
+  # Used in {.normalize_name} to swap out '.' separators for '::' in operator
+  # methods.
+  # 
+  # @return [::String]
+  # 
+  OPERATOR_METHOD_NAME_REGEXP_FRAGMENT = \
+    OPERATOR_METHOD_NAMES.
+      map { |op_name| "(?:#{ Regexp.escape op_name })" }
+      .join '|'
+  
+  
   # Singleton Methods
   # ==========================================================================
   
@@ -267,6 +292,10 @@ module  LinkStdlib
   #   YARD::LinkStdlib.normalize_name 123
   #   #=> raise TypeError, %(`name` must be a String, given Fixnum: 123)
   # 
+  # @example Handle operator singleton methods separated by '.'
+  #   YARD::LinkStdlib.normalize_name 'Dir.[]'
+  #   #=> 'Dir::[]'
+  # 
   # @param [::String] name
   #   Code object name, as it may appear in YARD.
   # 
@@ -278,14 +307,15 @@ module  LinkStdlib
         "`name` must be a String, given #{ name.class }: #{ name.inspect }"
     end
     
-    # Strip off any leading `::`
-    if name.start_with? '::'
-      name = name[ 2..-1 ]
-    end
-    
     # Stdlib rdoc uses `ClassOrModule::class_method` format for class methods,
-    # so we want to convert to that
-    name.sub /\.(\w+[\?\!]?)\z/, '::\1'
+    # so we want to convert to that, and strip off any leading '::'
+    name.
+      # Strip off any leading '::'
+      sub( /\A::/, '' ).
+      # Convert most singleton methods using '.' to '::' (except operators)
+      sub( /\.(\w+[\?\!]?)\z/, '::\1' ).
+      # Convert operator singleton methods using '.' to '::'
+      sub( /\.(#{ OPERATOR_METHOD_NAME_REGEXP_FRAGMENT })\z/, '::\1' )
   end # .normalize_name
   
   
