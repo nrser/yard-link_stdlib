@@ -90,6 +90,45 @@ class RDoc::RDoc
 end # class RDoc::RDoc
 
 
+def load_pry
+  require 'pry'
+  # In most project you probably *don't* want to load the RC file,
+  # as it may have dependencies
+  Pry.config.should_load_rc = false
+end
+
+
+# Add pre-defined global variables and constants, which are hand-documented in
+#     RUBY_SRC/doc/globals.rdoc
+# 
+# and available on the site at
+# 
+#     https://docs.ruby-lang.org/en/<MAJOR.MINOR.0>/globals_rdoc.html
+# 
+# like https://docs.ruby-lang.org/en/2.3.0/globals_rdoc.html
+# 
+# 
+def add_globals_and_constants map
+  rdoc_path = './doc/globals.rdoc'
+  html_path = 'globals_rdoc.html'
+  
+  unless File.file? rdoc_path
+    warn  "Can't find globals and constants RDoc file at " +
+          "#{ File.expand_path rdoc_path }"
+    warn  "Pre-defined global variables and constants will NOT be available" +
+          "in this map!"
+    return
+  end
+  
+  contents = File.read rdoc_path
+  
+  contents.scan /^(\S+)::\s/ do |(name)|
+    map[ name ] = html_path
+    # puts "Added #{ name.inspect } => #{ html_path }"
+  end
+end
+
+
 def main args
   src = Pathname.new( args.shift ).expand_path
   dest = Pathname.new( args.shift ).expand_path
@@ -112,8 +151,12 @@ def main args
   rd.almost_document args
 
   map = {}
-
+  
+  add_globals_and_constants map
+  
+  # Add all classes and modules
   rd.store.all_classes_and_modules.each do |mod|
+    # Example of how to stop and inspect a particular module when debugging
     # if mod.full_name == 'Gem::Specification'
     #   require 'pry'
     #   Pry.config.should_load_rc = false
@@ -129,6 +172,7 @@ def main args
       mod.instance_method_list,
     ].flatten.each { |entry|
       map[ entry.full_name ] = entry.path
+      # puts "Added #{ entry.full_name.inspect } => #{ entry.path }"
     }
     
   end
