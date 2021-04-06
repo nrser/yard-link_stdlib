@@ -169,7 +169,7 @@ def main args
       mod.class_attributes,
       mod.class_method_list,
       mod.instance_attributes,
-      mod.instance_method_list,
+      mod.instance_methods,
     ].flatten.each { |entry|
       map[ entry.full_name ] = entry.path
       # puts "Added #{ entry.full_name.inspect } => #{ entry.path }"
