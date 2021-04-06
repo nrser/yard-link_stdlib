@@ -290,7 +290,7 @@ module  LinkStdlib
   # 
   # @example Puke if it's not a {String}
   #   YARD::LinkStdlib.normalize_name 123
-  #   #=> raise TypeError, %(`name` must be a String, given Fixnum: 123)
+  #   #=> raise TypeError, %(`name` must be a String, given Integer: 123)
   # 
   # @example Handle operator singleton methods separated by '.'
   #   YARD::LinkStdlib.normalize_name 'Dir.[]'
